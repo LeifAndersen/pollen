@@ -24,7 +24,16 @@
                                       (values null null)
                                       (values (car reversed-pieces) (cdr reversed-pieces))))
       
-      `(,id ,@(if (equal? attrs null) null (list (reverse attrs))) ,@body)))
+      ;; make this behave similar to ->html, where it's OK to use a list as the last arg (e.g., result of `map`)
+      ;; this way, we can avoid having to use `apply` in those cases.
+      (define body-unpacked (if (and (= (length body) 1)
+                                     (list? (car body))
+                                     (not (txexpr? (car body)))
+                                     (andmap txexpr-element? (car body)))
+                                (car body)
+                                body))
+      
+      `(,id ,@(if (equal? attrs null) null (list (reverse attrs))) ,@body-unpacked)))
   
   (procedure-rename (apply compose1 (map make-one-tag ids)) (string->symbol (format "pollen-tag:~a" (string-join (map symbol->string ids) "+")))))
 
